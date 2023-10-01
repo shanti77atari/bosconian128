@@ -1,0 +1,1 @@
+c:\b\mads.exe -t -l -u %1.asm 

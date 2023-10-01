@@ -1,0 +1,229 @@
+mads 2.0.4 build 13 (8 May 16)
+Source: a1.asm
+     1 = D40A			WSYNC		equ $D40A
+     2 = D20F			SKCTL		equ $d20f
+     3 = D208			AUDCTL		equ $D208
+     4 = D200			AUDF1		equ $D200
+     5 = D202			AUDF2		equ $D202
+     6 = D204			AUDF3		equ $D204
+     7 = D206			AUDF4		equ $D206
+     8 = D20E			IRQEN		equ $D20E
+     9 = 0010			IRQENS		equ $10
+    10 = 0210			VTIMER1		equ $0210
+    11 = D209			STIMER		equ $D209
+    12 = D201			AUDC1		equ $D201
+    13 = D203			AUDC2		equ $D203
+    14 = D205			AUDC3		equ $D205
+    15 = D207			AUDC4		equ $D207	
+    16 = 022F			DMACTLS		equ $022F
+    17 = D20A			RANDOM		equ $D20A	
+    18 = D40E			NMIEN		equ $D40E
+    19 = D400			DMACTL		equ $D400
+    20 = D40B			VCOUNT		equ $D40B
+    21 = D01A			COLBAK		equ $D01A
+    22
+    23
+    24 = 00CB			rejA		equ 203
+    25 = 00CD			rejY		equ 205
+    26 = 00CE			sam			equ 206
+    27 = 00D0			sam1		equ 208
+    28 = 00D2			sam2		equ 210
+    29 = 00D4			powtorz		equ 212
+    30 = 00D5			sirq		equ 213
+    31
+    32 						org $600
+    33 						
+    34 FFFF> 0600-06A9> A9 00			lda #0
+    35 0602 8D 08 D2				sta $d208
+    36 0605 A0 03				ldy #3
+    37 0607 8C 0F D2				sty $d20f
+    38 060A A9 00 8D 0E D4			mva #0 NMIEN
+    39 						
+    40 060F A9 00				lda #0		;64khz
+    41 0611 8D 08 D2				sta AUDCTL
+    42 						;sta DMACTL
+    43 						
+    44 0614 78					sei
+    45 0615 A9 00 8D 0E D4			mva #0 NMIEN
+    46 061A A9 FE				lda #$fe
+    47 061C 8D 01 D3				sta $D301
+    48 						
+    49 061F A9 00 8D FE FF A9 + 		mwa #pok0 $fffe
+    50 0629 A9 00 8D 0E D2			mva #0 IRQEN
+    51 062E 58					cli
+    52 062F A9 10 8D 03 07			mva #%10000 probka+1
+    53 						
+    54 = 0634			loop	equ *		
+    55 0634 A9 7C 85 CE A9 07 + 		mwa #SAMPLE sam
+    56 063C A9 7C 85 D2 A9 07 + 		mwa #SAMPLE sam2
+    57 0644 A9 24 85 D0 A9 11 + 		mwa #Sample_end	sam1
+    58 064C A9 01 85 D4				mva #1 powtorz
+    59 0650 AD 7C 07				lda SAMPLE
+    60 0653 29 11				and #15+2
+    61 0655 09 10				ora #%10000
+    62 0657 8D 03 07				sta probka+1
+    63 						
+    64 						
+    65 065A AD 24 11 8D 06 D2			mva Sample_end AUDF4
+    66 0660 A9 04				lda #4
+    67 0662 8D 0E D2				sta IRQEN
+    68 0665 8D 09 D2				sta STIMER
+    69 0668 85 D5				sta sirq
+    70 						
+    71 						
+    72 066A A5 D5		@		lda sirq
+    73 066C D0 FC				bne @-
+    74 						
+    75 066E A9 25 85 CE A9 11 + 		mwa #SAMPLE2 sam
+    76 0676 A9 25 85 D2 A9 11 + 		mwa #SAMPLE2 sam2
+    77 067E A9 25 85 D0 A9 13 + 		mwa #s2end	sam1
+    78 0686 A9 01 85 D4				mva #1 powtorz
+    79 068A AD 25 11				lda SAMPLE2
+    80 068D 29 0F				and #15
+    81 068F 09 10				ora #%10000
+    82 0691 8D 03 07				sta probka+1
+    83 						
+    84 0694 A9 1E 8D 06 D2			mva #30 AUDF4
+    85 0699 A9 04				lda #4
+    86 069B 8D 0E D2				sta IRQEN
+    87 069E 8D 09 D2				sta STIMER
+    88 06A1 85 D5				sta sirq
+    89 						
+    90 06A3 A5 D5		@		lda sirq
+    91 06A5 D0 FC				bne @-		
+    92 						
+    93 06A7 4C 34 06				jmp loop
+    94 						
+    95 				/*		mwa #SAMPLE3 sam
+    96 						mwa #SAMPLE3 sam2
+    97 						mwa #s3end	sam1
+    98 						mva #1 powtorz
+    99 						lda SAMPLE3
+   100 						and #15
+   101 						ora #%10000
+   102 						sta probka+1
+   103 						
+   104 						
+   105 						mva s3end AUDF4
+   106 						lda #4
+   107 						sta IRQEN
+   108 						sta STIMER
+   109 						sta sirq
+   110 						
+   111 						
+   112 				@		lda sirq
+   113 						bne @-
+   114 						
+   115 						mwa #SAMPLE2 sam
+   116 						mwa #SAMPLE2 sam2
+   117 						mwa #s2end	sam1
+   118 						mva #1 powtorz
+   119 						lda SAMPLE2
+   120 						and #15
+   121 						ora #%10000
+   122 						sta probka+1
+   123 						
+   124 						mva #30 AUDF4
+   125 						lda #4
+   126 						sta IRQEN
+   127 						sta STIMER
+   128 						sta sirq
+   129 						
+   130 				@		lda sirq
+   131 						bne @-				
+   132 						
+   133 						
+   134 						jmp loop*/
+   134
+   135 						
+   136 						 
+   137 06AA					.align		
+   138 = 0700			pok0	equ *
+   139 0700-1325> 85 CB				sta rejA
+   140 = 0702			probka	equ *		
+   141 0702 A9 FF				lda #$ff
+   142 0704 8D 01 D2				sta AUDC1
+   143 0707 8D 1A D0				sta COLBAK
+   144 						
+   145 070A 84 CD				sty rejY
+   146 070C A0 00				ldy #0		
+   147 070E 8C 0E D2				sty IRQEN
+   148 0711 B1 CE				lda (sam),y
+   149 0713 09 10				ora #%10000
+   150 0715 8D 54 07				sta probka1+1
+   151 						
+   152 0718 E6 CE				inc sam
+   153 071A D0 02				bne @+
+   154 071C E6 CF				inc sam+1
+   155 						
+   156 071E A5 CE		@		lda sam
+   157 0720 C5 D0				cmp sam1
+   158 0722 F0 0F				beq @+1
+   159
+   160 0724 A9 04		@		lda #4		;resetuj licznik
+   161 0726 8D 0E D2				sta IRQEN	
+   162 						
+   163 0729 A9 51 8D FE FF			mva <pok1 $fffe
+   164 							
+   165 072E A5 CB				lda rejA	;odtworz rejestr A
+   166 0730 A4 CD				ldy rejY
+   167 0732 40					rti
+   168 								
+   169 0733 A5 CF		@		lda sam+1
+   170 0735 C5 D1				cmp sam1+1
+   171 0737 D0 EB				bne @-1
+   172
+   173 0739 C6 D4				dec powtorz
+   174 073B F0 0B				beq @+
+   175 073D A5 D2				lda sam2
+   176 073F 85 CE				sta sam
+   177 0741 A5 D3				lda sam2+1
+   178 0743 85 CF				sta sam+1
+   179 0745 4C 24 07				jmp @-1
+   180 						
+   181 0748 A9 00		@		lda #0		;wylacz przerwanie
+   182 074A 85 D5				sta sirq
+   183 						
+   184 074C A5 CB				lda rejA	
+   185 074E A4 CD				ldy rejY
+   186 0750 40					rti
+   187 						
+   188 = 0751			pok1	equ *		;gorna polowka
+   189 0751 85 CB				sta rejA
+   190 = 0753			probka1	equ *
+   191 0753 A9 FF				lda #$ff
+   192 0755 8D 01 D2				sta AUDC1
+   193 0758 8D 1A D0				sta COLBAK
+   194 075B 84 CD				sty rejY
+   195 						
+   196 075D A0 00				ldy #0
+   197 075F 8C 0E D2				sty IRQEN
+   198 0762 B1 CE				lda (sam),y
+   199 0764 4A 4A 4A 4A				:4 lsr
+   200 0768 09 10				ora #%10000
+   201 076A 8D 03 07				sta probka+1
+   202 						
+   203 076D A9 04				lda #4
+   204 076F 8D 0E D2				sta IRQEN
+   205 						
+   206 0772 A9 00 8D FE FF			mva <pok0 $fffe
+   207 						
+   208 0777 A4 CD				ldy rejY
+   209 0779 A5 CB				lda rejA
+   210 077B 40					rti		
+   211
+   212 = 077C			SAMPLE	equ *
+   213 077C 88 88 88 88 88 88 + 		ins '/samples/roundclr35.wav'
+   214 1124 11			Sample_end		dta b(17)
+   215
+   216
+   217 = 1125			SAMPLE2	equ *
+   218 1125 88 88 88 88 88 88 + 		:512 dta b($88)
+   219 1325 00			s2end	dta b(0)
+   220 				/*		
+   221 				SAMPLE3	ins '/samples/spy.wav'		
+   222 				s3end	dta b(15)*/
+   222
+   223
+   224 						
+   225 						

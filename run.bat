@@ -1,0 +1,1 @@
+C:\Users\Shanti\Desktop\a800\atari800.exe c:\b\bosconian.xex

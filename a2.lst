@@ -1,0 +1,66 @@
+mads 2.0.4 build 13 (8 May 16)
+Source: a2.asm
+     1 = D40A			WSYNC		equ $D40A
+     2 = D20F			SKCTL		equ $d20f
+     3 = D208			AUDCTL		equ $D208
+     4 = D200			AUDF1		equ $D200
+     5 = D202			AUDF2		equ $D202
+     6 = D204			AUDF3		equ $D204
+     7 = D206			AUDF4		equ $D206
+     8 = D20E			IRQEN		equ $D20E
+     9 = 0010			IRQENS		equ $10
+    10 = 0210			VTIMER1		equ $0210
+    11 = D209			STIMER		equ $D209
+    12 = D201			AUDC1		equ $D201
+    13 = D203			AUDC2		equ $D203
+    14 = D205			AUDC3		equ $D205
+    15 = D207			AUDC4		equ $D207	
+    16 = 022F			DMACTLS		equ $022F
+    17 = D20A			RANDOM		equ $D20A	
+    18 = D40E			NMIEN		equ $D40E
+    19 = D400			DMACTL		equ $D400
+    20 = D40B			VCOUNT		equ $D40B
+    21 = D01A			COLBAK		equ $D01A
+    22 						
+    23 					org $2000
+    24
+    25 = 2000			start	equ *
+    26 FFFF> 2000-7190> 78	    sei
+    27 2001 A9 00		    lda #0
+    28 2003 8D 0E D2		    sta IRQEN
+    29 2006 8D 0E D4		    sta NMIEN
+    30 2009 8D 00 D4		    sta DMACTL
+    31 				    ;mva #$FF GRAFP0
+    32 				    ;mva #15 COLPM0
+    33 200C A9 50 8D 08 D2	    mva #$50 AUDCTL
+    34 2011 A9 00 8D 03 D2	    mva #$00 AUDC2
+    35 2016 A9 00 8D 05 D2	    mva #$00 AUDC3
+    36 201B A9 00 8D 07 D2	    mva #$00 AUDC4
+    37 2020 A9 FF 8D 02 D2	    mva #$FF AUDF2
+    38 				    
+    39 2025 A9 AF 8D 01 D2	    mva #$AF AUDC1
+    40 202A A9 50 8D 08 D2	    mva #$50 AUDCTL
+    41 202F A0 71		    ldy #>Sample_end
+    42 2031 A2 90			ldx #<Sample_end
+    43
+    44 2033 AD 61 20		ld  lda SAMPLE
+    45 2036 8D 0A D4		    sta WSYNC
+    46 2039 8D 00 D2		    sta AUDF1
+    47 203C 8D 09 D2		    sta STIMER
+    48 203F 18 69 44		    add #$44
+    49 				    ;sta HPOSP0
+    50 2042 EE 34 20		    inc ld+1
+    51 2045 D0 03		    bne ld1
+    52 2047 EE 35 20		    inc ld+2
+    53 204A EC 34 20		ld1 cpx ld+1
+    54 204D D0 E4		    bne ld
+    55 204F CC 35 20			cpy ld+2
+    56 2052 D0 DF			bne ld
+    57 2054 A9 61 8D 34 20 A9 +     mwa #SAMPLE ld+1
+    58 205E 4C 33 20			jmp ld
+    59 					
+    60 = 2061			SAMPLE	equ *
+    61 2061 80 80 80 80 80 80 + 		ins '/samples/battle8.raw'
+    62 7190 11			Sample_end		dta b(17)	
+    63 					
+    64 					
